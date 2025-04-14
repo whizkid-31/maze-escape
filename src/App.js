@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import "./App.css";
 
 const GRID_SIZE = 5;
@@ -50,9 +50,10 @@ function App() {
   const [status, setStatus] = useState("playing");
   const [timeLeft, setTimeLeft] = useState(30);
 
-  const moveSound = new Audio("/move.wav");
-  const wallSound = new Audio("/wall.wav");
-  const winSound = new Audio("/victory_chime.wav");
+  // Memoizing the sound objects
+  const moveSound = useMemo(() => new Audio("/move.wav"), []);
+  const wallSound = useMemo(() => new Audio("/wall.wav"), []);
+  const winSound = useMemo(() => new Audio("/victory_chime.wav"), []);
 
   useEffect(() => {
     if (status === "playing" && timeLeft > 0) {
@@ -63,7 +64,7 @@ function App() {
     }
   }, [status, timeLeft]);
 
-  const movePlayer = (dx, dy) => {
+  const movePlayer = useCallback((dx, dy) => {
     if (status !== "playing") return;
 
     const newX = playerPos.x + dx;
@@ -85,7 +86,7 @@ function App() {
     } else {
       wallSound.play();
     }
-  };
+  }, [status, playerPos, maze, level, moveSound, wallSound, winSound]); // No need to re-create sound objects on each render
 
   const restartGame = () => {
     setPlayerPos(START_POS);
@@ -101,7 +102,7 @@ function App() {
     else if (e.key === "ArrowDown") movePlayer(0, 1);
     else if (e.key === "ArrowLeft") movePlayer(-1, 0);
     else if (e.key === "ArrowRight") movePlayer(1, 0);
-  }, [status, playerPos]);
+  }, [status, movePlayer]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
