@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
 
 const GRID_SIZE = 5;
@@ -95,13 +95,13 @@ function App() {
     setMaze(MAZES[0]);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = useCallback((e) => {
     if (status !== "playing") return;
     if (e.key === "ArrowUp") movePlayer(0, -1);
     else if (e.key === "ArrowDown") movePlayer(0, 1);
     else if (e.key === "ArrowLeft") movePlayer(-1, 0);
     else if (e.key === "ArrowRight") movePlayer(1, 0);
-  };
+  }, [status, playerPos]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
