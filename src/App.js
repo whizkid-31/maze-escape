@@ -48,7 +48,7 @@ function App() {
   const [maze, setMaze] = useState(MAZES[0]);
   const [playerPos, setPlayerPos] = useState(START_POS);
   const [status, setStatus] = useState("playing");
-  const [timeLeft, setTimeLeft] = useState(30);
+  const [timeLeft, setTimeLeft] = useState(10);
 
   useEffect(() => {
     if (status === "playing" && timeLeft > 0) {
@@ -84,7 +84,7 @@ function App() {
               setLevel(nextLevel);
               setMaze(MAZES[nextLevel]);
               setPlayerPos(START_POS);
-              setTimeLeft(30);
+              setTimeLeft(10);
             } else {
               setStatus("won");
             }
@@ -127,7 +127,7 @@ function App() {
           setLevel(nextLevel);
           setMaze(MAZES[nextLevel]);
           setPlayerPos(START_POS);
-          setTimeLeft(30);
+          setTimeLeft(10);
         } else {
           setStatus("won");
         }
@@ -140,7 +140,7 @@ function App() {
   const restartGame = () => {
     setPlayerPos(START_POS);
     setStatus("playing");
-    setTimeLeft(30);
+    setTimeLeft(10);
     setLevel(0);
     setMaze(MAZES[0]);
   };
