@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 const GRID_SIZE = 5;
@@ -40,20 +40,15 @@ const MAZES = [
     [1, 0, 0, 1, 0],
     [1, 1, 1, 0, 0],
     [0, 0, 0, 0, 0],
-  ]
+  ],
 ];
 
 function App() {
   const [level, setLevel] = useState(0);
-  const [maze, setMaze] = useState(MAZES[level]);
+  const [maze, setMaze] = useState(MAZES[0]);
   const [playerPos, setPlayerPos] = useState(START_POS);
   const [status, setStatus] = useState("playing");
   const [timeLeft, setTimeLeft] = useState(30);
-
-  // Memoizing the sound objects
-  const moveSound = useMemo(() => new Audio("/move.wav"), []);
-  const wallSound = useMemo(() => new Audio("/wall.wav"), []);
-  const winSound = useMemo(() => new Audio("/victory_chime.wav"), []);
 
   useEffect(() => {
     if (status === "playing" && timeLeft > 0) {
@@ -64,29 +59,83 @@ function App() {
     }
   }, [status, timeLeft]);
 
-  const movePlayer = useCallback((dx, dy) => {
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (status !== "playing") return;
+
+      const move = (dx, dy) => {
+        const newX = playerPos.x + dx;
+        const newY = playerPos.y + dy;
+
+        if (
+          newX >= 0 &&
+          newX < GRID_SIZE &&
+          newY >= 0 &&
+          newY < GRID_SIZE &&
+          maze[newY][newX] === 0
+        ) {
+          setPlayerPos({ x: newX, y: newY });
+          new Audio("/move.wav").play();
+
+          if (newX === END_POS.x && newY === END_POS.y) {
+            new Audio("/victory_chime.wav").play();
+            if (level < MAZES.length - 1) {
+              const nextLevel = level + 1;
+              setLevel(nextLevel);
+              setMaze(MAZES[nextLevel]);
+              setPlayerPos(START_POS);
+              setTimeLeft(30);
+            } else {
+              setStatus("won");
+            }
+          }
+        } else {
+          new Audio("/wall.wav").play();
+        }
+      };
+
+      if (e.key === "ArrowUp") move(0, -1);
+      else if (e.key === "ArrowDown") move(0, 1);
+      else if (e.key === "ArrowLeft") move(-1, 0);
+      else if (e.key === "ArrowRight") move(1, 0);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [status, playerPos, maze, level]);
+
+  const handleButtonClick = (dx, dy) => {
     if (status !== "playing") return;
 
     const newX = playerPos.x + dx;
     const newY = playerPos.y + dy;
 
-    if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE && maze[newY][newX] === 0) {
+    if (
+      newX >= 0 &&
+      newX < GRID_SIZE &&
+      newY >= 0 &&
+      newY < GRID_SIZE &&
+      maze[newY][newX] === 0
+    ) {
       setPlayerPos({ x: newX, y: newY });
-      moveSound.play();
+      new Audio("/move.wav").play();
+
       if (newX === END_POS.x && newY === END_POS.y) {
-        winSound.play();
+        new Audio("/victory_chime.wav").play();
         if (level < MAZES.length - 1) {
-          setLevel(level + 1);
-          setMaze(MAZES[level + 1]);
+          const nextLevel = level + 1;
+          setLevel(nextLevel);
+          setMaze(MAZES[nextLevel]);
           setPlayerPos(START_POS);
+          setTimeLeft(30);
         } else {
           setStatus("won");
         }
       }
     } else {
-      wallSound.play();
+      new Audio("/wall.wav").play();
     }
-  }, [status, playerPos, maze, level, moveSound, wallSound, winSound]); // No need to re-create sound objects on each render
+  };
 
   const restartGame = () => {
     setPlayerPos(START_POS);
@@ -96,24 +145,15 @@ function App() {
     setMaze(MAZES[0]);
   };
 
-  const handleKeyDown = useCallback((e) => {
-    if (status !== "playing") return;
-    if (e.key === "ArrowUp") movePlayer(0, -1);
-    else if (e.key === "ArrowDown") movePlayer(0, 1);
-    else if (e.key === "ArrowLeft") movePlayer(-1, 0);
-    else if (e.key === "ArrowRight") movePlayer(1, 0);
-  }, [status, movePlayer]);
-
-  useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyDown]);
-
   return (
     <div className="game-container">
       <h1>Mind Maze</h1>
       <div className="status">
-        {status === "won" ? "You Escaped All Levels! 🎉" : status === "lost" ? `Time's up! ⏰` : `Time Left: ${timeLeft}s`}
+        {status === "won"
+          ? "You Escaped All Levels! 🎉"
+          : status === "lost"
+          ? "Time's up! ⏰"
+          : `Time Left: ${timeLeft}s`}
       </div>
       <div className="grid">
         {maze.map((row, y) =>
@@ -126,16 +166,14 @@ function App() {
           })
         )}
       </div>
-      {status !== "playing" && (
-        <button onClick={restartGame}>Restart</button>
-      )}
+      {status !== "playing" && <button onClick={restartGame}>Restart</button>}
       <div className="controls">
-        <button onClick={() => movePlayer(0, -1)}>↑</button>
+        <button onClick={() => handleButtonClick(0, -1)}>↑</button>
         <div>
-          <button onClick={() => movePlayer(-1, 0)}>←</button>
-          <button onClick={() => movePlayer(1, 0)}>→</button>
+          <button onClick={() => handleButtonClick(-1, 0)}>←</button>
+          <button onClick={() => handleButtonClick(1, 0)}>→</button>
         </div>
-        <button onClick={() => movePlayer(0, 1)}>↓</button>
+        <button onClick={() => handleButtonClick(0, 1)}>↓</button>
       </div>
     </div>
   );
